@@ -141,7 +141,7 @@ void bitmap_interactive() {
   int ic;
 
   for (;;) {
-    fputs("bitmap> ", stdout);
+    fputs("fat> ", stdout);
     fflush(stdout);
     switch ((ic = getcmd(&cmd, &param1, &param2))) {
       case 0:
