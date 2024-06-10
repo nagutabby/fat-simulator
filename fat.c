@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "getcmd.c"
 
 #define NUM_FAT_BLOCK 1024
 
@@ -97,7 +98,7 @@ int fat_free(int block_index, int num_block) {
   } else {
     for (int i = 0; i < num_block; i++) {
       if (!is_free(block_index + i)) {
-        fat[block_index].next = -2;
+        fat[block_index + i].next = -2;
         num_free_block++;
       }
     }
@@ -131,6 +132,44 @@ void fat_dump() {
   }
 }
 
+void bitmap_interactive() {
+  int bn;
+  char cmd;
+  int param1, param2;
+  int ic;
+
+  for (;;) {
+    fputs("bitmap> ", stdout); fflush(stdout);
+    switch((ic = getcmd(&cmd, &param1, &param2))) {
+      case 0:
+        goto out;
+      case 1:
+        if (cmd == 'd')
+          fat_dump();
+        else if (cmd == 'v')
+          fat_verify();
+        break;
+      case 2:
+        if (cmd == 'a') {
+          bn = fat_allocate(param1);
+          printf("A %d %d\n", bn, param1);
+        } else if (cmd == 'l') {
+          fat_list(param1);
+        }
+        break;
+      case 3:
+        if (cmd == 'f') {
+          fat_free(param1, param2);
+          printf("F %d\n", param1);
+        }
+        break;
+      case -1:
+        break;
+    }
+  }
+out:;
+}
+
 int main() {
   fat_clear();
 
@@ -143,6 +182,10 @@ int main() {
   // 異常系テスト
   // fat_allocate(1025);
   // fat_free(-1, 1);
+
+#if 1
+  bitmap_interactive();
+#endif
 
   fat_dump();
   fat_verify();
