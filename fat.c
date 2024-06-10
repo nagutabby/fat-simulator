@@ -107,6 +107,7 @@ int fat_free(int block_index, int num_block) {
   }
 }
 
+// 連結リストのそれぞれのブロックが参照するブロック番号を順に出力する
 void fat_list(int block_index) {
   int current_index = block_index;
   while (fat[current_index].next != -2) {
