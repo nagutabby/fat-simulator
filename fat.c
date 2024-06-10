@@ -2,15 +2,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "getcmd.c"
 
-#define NUM_FAT_BLOCK 1024
+#define SSBLK 1024
 
 typedef struct {
   int next;
 } Fat;
 
-Fat fat[NUM_FAT_BLOCK];
+Fat fat[SSBLK];
 
 int num_free_block;
 
@@ -20,11 +21,11 @@ bool is_free(int block_index) { return fat[block_index].next == -2; }
 // next: 次のブロック番号
 // FATのすべてのブロックのnextを-2にする
 void fat_clear() {
-  for (int i = 0; i < NUM_FAT_BLOCK; i++) {
+  for (int i = 0; i < SSBLK; i++) {
     // 0以上はブロック番号であり、-1は連結リストの終わりを表す番号なので-2で初期化する
     fat[i].next = -2;
   }
-  num_free_block = NUM_FAT_BLOCK;
+  num_free_block = SSBLK;
 }
 
 // 必要なブロックを割り当てる
@@ -35,14 +36,14 @@ int fat_allocate(int num_block_required) {
   int count_free_block = 0;
   int prev_index;
 
-  for (int i = 0; i < NUM_FAT_BLOCK; i++) {
+  for (int i = 0; i < SSBLK; i++) {
     if (is_free(i)) {
       head = i;
       break;
     }
   }
 
-  for (int i = 0; i < NUM_FAT_BLOCK; i++) {
+  for (int i = 0; i < SSBLK; i++) {
     if (is_free(i)) {
       count_free_block++;
     }
@@ -54,7 +55,7 @@ int fat_allocate(int num_block_required) {
   } else {
     prev_index = head;
 
-    for (int i = head; i < NUM_FAT_BLOCK; i++) {
+    for (int i = head; i < SSBLK; i++) {
       if (is_free(i)) {
         if (fat[prev_index].next == -1) {
           fat[prev_index].next = i;
@@ -74,12 +75,12 @@ int fat_allocate(int num_block_required) {
 // ブロック割り当てが適切かどうかチェックする
 void fat_verify() {
   int num_block = 0;
-  for (int i = 0; i < NUM_FAT_BLOCK; i++) {
+  for (int i = 0; i < SSBLK; i++) {
     if (!is_free(i)) {
       num_block++;
     }
   }
-  if (num_block == (NUM_FAT_BLOCK - num_free_block)) {
+  if (num_block == (SSBLK - num_free_block)) {
     printf("ブロック割り当ては適切です\n");
   } else {
     printf("ブロック割り当てが不適切です\n");
@@ -92,7 +93,7 @@ void fat_verify() {
 // 解放できた場合: 0を返す
 // 解放できなかった場合: -1を返す
 int fat_free(int block_index, int num_block) {
-  if (block_index < 0 || block_index > NUM_FAT_BLOCK - 1) {
+  if (block_index < 0 || block_index > SSBLK - 1) {
     printf("管理していないブロックは開放できません\n");
     return -1;
   } else {
@@ -122,7 +123,7 @@ void fat_list(int block_index) {
 
 // データの状態を出力する
 void fat_dump() {
-  for (int i = 0; i < NUM_FAT_BLOCK; i++) {
+  for (int i = 0; i < SSBLK; i++) {
     putchar(is_free(i) ? '0' : '1');
     if (i % 64 == 63) {
       putchar('\n');
@@ -139,8 +140,9 @@ void bitmap_interactive() {
   int ic;
 
   for (;;) {
-    fputs("bitmap> ", stdout); fflush(stdout);
-    switch((ic = getcmd(&cmd, &param1, &param2))) {
+    fputs("bitmap> ", stdout);
+    fflush(stdout);
+    switch ((ic = getcmd(&cmd, &param1, &param2))) {
       case 0:
         goto out;
       case 1:
